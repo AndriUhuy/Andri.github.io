@@ -1,0 +1,84 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include "BluetoothSerial.h"
+
+#if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
+#error Bluetooth is not enabled! Please run `make menuconfig` to and enable it
+#endif
+
+#define SCREEN_WIDTH 128 // Lebar layar OLED
+#define SCREEN_HEIGHT 32 // Tinggi layar OLED
+#define OLED_RESET    -1 // Reset pin OLED (tidak digunakan)
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+BluetoothSerial SerialBT;
+
+const int ledPin1 = 2;
+const int ledPin2 = 4;
+const int ledPin3 = 18;
+
+void setup() {
+  Serial.begin(115200);
+  SerialBT.begin("ESPtestUhuy01");
+
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+  pinMode(ledPin3, OUTPUT);
+  digitalWrite(ledPin1, LOW);
+  digitalWrite(ledPin2, LOW);
+  digitalWrite(ledPin3, LOW);
+
+  // Inisialisasi OLED
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println(F("Gagal menginisialisasi OLED"));
+    for(;;);
+  }
+  display.clearDisplay();
+  display.setTextSize(1,2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0,7);
+  display.println("Bluetooth Ready!");
+  display.display();
+
+  Serial.println("Bluetooth sudah bisa digunakan!");
+}
+
+void loop() {
+  if (SerialBT.available()) {
+    String dataTerima = SerialBT.readString();
+    dataTerima.trim();
+    Serial.println("ESP32: " + dataTerima);
+    
+    // Tampilkan data di OLED
+    display.clearDisplay();
+    display.setCursor(0, 3);
+    display.println("Received:");
+    display.println(dataTerima);
+    display.display();
+    
+    if (dataTerima.equalsIgnoreCase("LED1 ON")) {
+      digitalWrite(ledPin1, HIGH);
+      SerialBT.println("LED 1 telah dinyalakan");
+    } else if (dataTerima.equalsIgnoreCase("LED1 OFF")) {
+      digitalWrite(ledPin1, LOW);
+      SerialBT.println("LED 1 telah dimatikan");
+    } else if (dataTerima.equalsIgnoreCase("LED2 ON")) {
+      digitalWrite(ledPin2, HIGH);
+      SerialBT.println("LED 2 telah dinyalakan");
+    } else if (dataTerima.equalsIgnoreCase("LED2 OFF")) {
+      digitalWrite(ledPin2, LOW);
+      SerialBT.println("LED 2 telah dimatikan");
+    } else if (dataTerima.equalsIgnoreCase("LED3 ON")) {
+      digitalWrite(ledPin3, HIGH);
+      SerialBT.println("LED 3 telah dinyalakan");
+    } else if (dataTerima.equalsIgnoreCase("LED3 OFF")) {
+      digitalWrite(ledPin3, LOW);
+      SerialBT.println("LED 3 telah dimatikan");
+    }
+  }
+
+  if (Serial.available()) {
+    SerialBT.write(Serial.read());
+  }
+}
