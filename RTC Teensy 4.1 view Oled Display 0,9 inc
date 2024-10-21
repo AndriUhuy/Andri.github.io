@@ -1,0 +1,122 @@
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <SPI.h>
+#include <Wire.h>
+#include <TimeLib.h>
+
+#define OLED_RESET 4
+#define OLED_WIDTH 128
+#define OLED_HEIGHT 64
+#define SELECT_PIN 2  // Pin untuk memilih elemen tanggal/waktu
+#define ADJUST_PIN 3  // Pin untuk menyesuaikan nilai
+
+Adafruit_SSD1306 display(OLED_WIDTH, OLED_HEIGHT, &Wire, OLED_RESET);
+
+String Jour = "";
+String Mois = "";
+String Annee = "";
+String heure = "";
+String Minute = "";
+String seconde = "";
+
+// Variabel untuk pengaturan
+int selectedElement = 0; // 0 = hari, 1 = bulan, 2 = tahun, 3 = jam, 4 = menit, 5 = detik
+
+// Deklarasi fungsi
+time_t getTeensy3Time(); // Fungsi untuk mendapatkan waktu dari RTC
+
+void setup() {
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); // Inisialisasi OLED dengan alamat I2C 0x3C
+  pinMode(SELECT_PIN, INPUT_PULLUP); // Setup pin untuk memilih elemen
+  pinMode(ADJUST_PIN, INPUT_PULLUP); // Setup pin untuk menyesuaikan nilai
+  
+  setSyncProvider(getTeensy3Time); // Sinkronisasi waktu dengan RTC (perbaikan di sini)
+}
+
+void loop() {
+  // Baca tombol dan atur tanggal atau waktu
+  if (digitalRead(SELECT_PIN) == LOW) {
+    selectedElement = (selectedElement + 1) % 6; // Pindah ke elemen berikutnya
+    delay(300); // Debounce
+  }
+
+  if (digitalRead(ADJUST_PIN) == LOW) {
+    adjustDateTime(); // Sesuaikan elemen yang dipilih
+    delay(300); // Debounce
+  }
+
+  // Mengambil dan mengformat tanggal
+  if (day() < 10) {
+    Jour = "0" + String(day());
+  } else {
+    Jour = String(day());
+  }
+
+  if (month() < 10) {
+    Mois = "0" + String(month());
+  } else {
+    Mois = String(month());
+  }
+
+  Annee = String(year()); // Ambil tahun
+
+  // Mengambil dan mengformat waktu
+  int currentHour = hour(); // Ambil nilai jam
+  if (currentHour < 10) {
+    heure = "0" + String(currentHour); // Tambahkan nol di depan jika jam < 10
+  } else {
+    heure = String(currentHour);
+  }
+
+  if (minute() < 10) {
+    Minute = "0" + String(minute()); // Tambahkan nol di depan jika menit < 10
+  } else {
+    Minute = String(minute());
+  }
+
+  if (second() < 10) {
+    seconde = "0" + String(second()); // Tambahkan nol di depan jika detik < 10
+  } else {
+    seconde = String(second());
+  }
+
+  // Menampilkan tanggal dan waktu pada OLED
+  display.clearDisplay(); // Bersihkan layar
+  display.setTextColor(WHITE);
+  display.setTextSize(2);
+  display.setCursor(5, 1);
+  display.println(Jour + "/" + Mois + "/" + Annee); // Tampilkan tanggal
+  display.setTextSize(2,4);
+  display.setCursor(5, 30);
+  display.println(heure + ":" + Minute + ":" + seconde); // Tampilkan waktu
+  display.display(); // Perbarui tampilan
+  delay(1000); // Tunggu 1 detik sebelum perulangan berikutnya
+}
+
+void adjustDateTime() {
+  switch (selectedElement) {
+    case 0: // Hari
+      setTime(hour(), minute(), second(), day() + 1, month(), year());
+      break;
+    case 1: // Bulan
+      setTime(hour(), minute(), second(), day(), month() + 1, year());
+      break;
+    case 2: // Tahun
+      setTime(hour(), minute(), second(), day(), month(), year() + 1);
+      break;
+    case 3: // Jam
+      setTime(hour() + 1, minute(), second(), day(), month(), year());
+      break;
+    case 4: // Menit
+      setTime(hour(), minute() + 1, second(), day(), month(), year());
+      break;
+    case 5: // Detik
+      setTime(hour(), minute(), second() + 1, day(), month(), year());
+      break;
+  }
+}
+
+// Implementasi fungsi untuk mendapatkan waktu dari RTC
+time_t getTeensy3Time() {
+  return Teensy3Clock.get(); // Mengembalikan waktu dari RTC
+}
