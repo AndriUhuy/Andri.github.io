@@ -1,0 +1,21 @@
+#include <WiFi.h>
+
+void setup() {
+  Serial.begin(115200);
+  delay(500);
+
+  // Pastikan WiFi STA aktif
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(); // tidak perlu SSID/Password
+  delay(200);   // beri waktu inisialisasi
+
+  // Cetak MAC Address WiFi STA
+  Serial.println("=== MAC Address ESP32-S3 ===");
+  Serial.println(WiFi.macAddress());
+}
+
+void loop() {}
+
+//Contoh Hasil yang berhasil:
+//=== MAC Address ESP32-S3 ===
+//7C:9E:BD:4A:1F:77
