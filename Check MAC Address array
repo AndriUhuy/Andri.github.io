@@ -1,0 +1,26 @@
+#include <WiFi.h>
+
+uint8_t receiverMAC[6]; // untuk simpan MAC dalam array
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.mode(WIFI_STA);
+  WiFi.begin();
+  delay(200);
+
+  // Ambil MAC Address dalam bentuk array
+  WiFi.macAddress(receiverMAC);
+
+  // Cetak dalam format array
+  Serial.print("uint8_t receiverMAC[] = {");
+  for (int i = 0; i < 6; i++) {
+    Serial.printf("0x%02X", receiverMAC[i]);
+    if (i < 5) Serial.print(", ");
+  }
+  Serial.println("};");
+}
+
+void loop() {}
+
+// Contoh Hasil yang keluar :
+// uint8_t receiverMAC[] = {0xFC, 0x01, 0x2C, 0xCB, 0x65, 0x14};
